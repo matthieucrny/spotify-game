@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blind Test Chronologique</title>
+  <link rel="stylesheet" href="css/style.css?v=4">
+</head>
+<body>
+
+  <!-- ========== ÉCRAN DE CONFIGURATION ========== -->
+  <section id="screen-setup" class="screen">
+    <header class="app-header">
+      <h1>🎵 Blind Test Chronologique</h1>
+      <p class="subtitle">Un seul téléphone, on se le passe — règles HITSTER</p>
+    </header>
+
+    <div class="setup-grid">
+      <div class="panel">
+        <h2>Joueurs</h2>
+        <div id="teams-editor"></div>
+        <button id="btn-add-team" class="btn btn-ghost">+ Ajouter un joueur</button>
+        <p class="hint-block">Chaque joueur démarre avec 1 carte révélée et <strong>2 jetons 🪙</strong>.<br>
+        Jetons : 1 🪙 = passer un morceau ou intercepter un placement raté, 3 🪙 = une carte gratuite.<br>
+        Trouver <strong>titre + artiste</strong> avant de placer = +1 🪙.</p>
+      </div>
+
+      <div class="panel">
+        <h2>Thème musical</h2>
+
+        <label class="field-label">Origine des morceaux</label>
+        <div class="choice-row" id="origine-choices">
+          <button class="chip" data-value="mixte">Mixte libre</button>
+          <button class="chip" data-value="fr100">100% français</button>
+          <button class="chip" data-value="fr70">70% FR / 30% inter.</button>
+          <button class="chip" data-value="int100">100% international</button>
+        </div>
+
+        <label class="field-label">Période</label>
+        <div class="choice-row" id="periode-choices">
+          <button class="chip" data-value="all">Toutes années</button>
+          <button class="chip" data-value="1960-1979">1960 – 1979</button>
+          <button class="chip" data-value="1980-1999">1980 – 1999</button>
+          <button class="chip" data-value="2000-2015">2000 – 2015</button>
+          <button class="chip" data-value="2016-2030">2016 – auj.</button>
+          <button class="chip" data-value="custom">Personnalisée</button>
+        </div>
+        <div id="periode-custom" class="periode-custom hidden">
+          <input type="number" id="periode-min" min="1900" max="2030" value="1980"> →
+          <input type="number" id="periode-max" min="1900" max="2030" value="2010">
+        </div>
+
+        <label class="field-label">Styles musicaux <span class="hint">(aucun coché = tous)</span></label>
+        <div class="choice-row" id="genre-choices"></div>
+
+        <label class="field-label">Cartes à aligner pour gagner</label>
+        <div class="target-row">
+          <button class="btn btn-ghost btn-step" id="target-minus">−</button>
+          <span id="target-value" class="target-value">10</span>
+          <button class="btn btn-ghost btn-step" id="target-plus">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="setup-footer">
+      <p id="pool-info" class="pool-info"></p>
+      <button id="btn-start" class="btn btn-primary btn-big">Lancer la partie</button>
+    </div>
+  </section>
+
+  <!-- ========== ÉCRAN DE JEU ========== -->
+  <section id="screen-game" class="screen hidden">
+    <header class="game-header">
+      <div id="turn-banner" class="turn-banner"></div>
+      <div id="scoreboard" class="scoreboard"></div>
+    </header>
+
+    <div class="player-zone panel">
+      <div class="player-wrap">
+        <div id="player-embed-container"><div id="player-embed"></div></div>
+        <div id="player-overlay" class="player-overlay">
+          <span class="overlay-icon">🎧</span>
+          <span class="overlay-text">Morceau mystère</span>
+        </div>
+      </div>
+      <div class="player-controls">
+        <button id="btn-listen" class="btn btn-primary">▶ Écouter l'extrait (20 s)</button>
+        <div id="countdown" class="countdown hidden">
+          <div id="countdown-bar" class="countdown-bar"></div>
+          <span id="countdown-label" class="countdown-label">20 s</span>
+        </div>
+      </div>
+      <div class="token-actions">
+        <button id="btn-skip" class="btn">🔄 Passer ce morceau <span class="cost">1 🪙</span></button>
+        <button id="btn-buy" class="btn">🎁 Carte gratuite <span class="cost">3 🪙</span></button>
+      </div>
+      <div id="guess-zone" class="guess-zone hidden">
+        <p class="guess-label">Bonus HITSTER — annoncez le titre <strong>et</strong> l'artiste avant de placer : les deux corrects = +1 jeton 🪙</p>
+        <button id="btn-mic" class="btn">🎤 Deviner à l'oral</button>
+        <p id="guess-transcript" class="guess-transcript"></p>
+      </div>
+      <p id="game-instruction" class="instruction"></p>
+    </div>
+
+    <div class="panel">
+      <h2 id="active-timeline-title"></h2>
+      <div id="active-timeline" class="timeline"></div>
+    </div>
+
+    <div id="other-timelines" class="other-timelines"></div>
+
+    <!-- Bandeau de révélation -->
+    <div id="reveal-modal" class="reveal-modal hidden">
+      <div class="reveal-card">
+        <div id="reveal-verdict" class="reveal-verdict"></div>
+        <div id="reveal-info" class="reveal-info"></div>
+        <button id="btn-next-turn" class="btn btn-primary btn-big"></button>
+      </div>
+    </div>
+
+    <!-- Interception (règle HITSTER : contester un placement avec 1 jeton) -->
+    <div id="steal-modal" class="reveal-modal hidden">
+      <div class="reveal-card">
+        <div class="reveal-verdict">🃏 Interception ?</div>
+        <div id="steal-info" class="reveal-info"></div>
+        <div id="steal-buttons" class="steal-buttons"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== ÉCRAN DE FIN ========== -->
+  <section id="screen-end" class="screen hidden">
+    <header class="app-header">
+      <h1 id="end-title"></h1>
+    </header>
+    <div id="end-ranking" class="panel end-ranking"></div>
+    <div class="setup-footer">
+      <button id="btn-replay" class="btn btn-primary btn-big">Rejouer (même config)</button>
+      <button id="btn-new-game" class="btn btn-ghost btn-big">Nouvelle partie</button>
+    </div>
+  </section>
+
+  <script src="js/tracks.js?v=4"></script>
+  <script src="js/app.js?v=4"></script>
+  <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
+</body>
+</html>
