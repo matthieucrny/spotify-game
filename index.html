@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Blind Test Chronologique</title>
-  <link rel="stylesheet" href="css/style.css?v=4">
+  <link rel="stylesheet" href="css/style.css?v=5">
 </head>
 <body>
 
@@ -20,9 +20,9 @@
         <h2>Joueurs</h2>
         <div id="teams-editor"></div>
         <button id="btn-add-team" class="btn btn-ghost">+ Ajouter un joueur</button>
-        <p class="hint-block">Chaque joueur démarre avec 1 carte révélée et <strong>2 jetons 🪙</strong>.<br>
-        Jetons : 1 🪙 = passer un morceau ou intercepter un placement raté, 3 🪙 = une carte gratuite.<br>
-        Trouver <strong>titre + artiste</strong> avant de placer = +1 🪙.</p>
+        <p class="hint-block">Chaque joueur démarre avec 1 carte révélée et <strong>2 jetons 🪙</strong> (5 max).<br>
+        Jetons : 1 🪙 = contester le placement d'un adversaire, 3 🪙 = une carte gratuite.<br>
+        Trouver <strong>titre + artiste</strong> = +1 🪙, même si la carte est mal placée.</p>
       </div>
 
       <div class="panel">
@@ -91,13 +91,7 @@
         </div>
       </div>
       <div class="token-actions">
-        <button id="btn-skip" class="btn">🔄 Passer ce morceau <span class="cost">1 🪙</span></button>
         <button id="btn-buy" class="btn">🎁 Carte gratuite <span class="cost">3 🪙</span></button>
-      </div>
-      <div id="guess-zone" class="guess-zone hidden">
-        <p class="guess-label">Bonus HITSTER — annoncez le titre <strong>et</strong> l'artiste avant de placer : les deux corrects = +1 jeton 🪙</p>
-        <button id="btn-mic" class="btn">🎤 Deviner à l'oral</button>
-        <p id="guess-transcript" class="guess-transcript"></p>
       </div>
       <p id="game-instruction" class="instruction"></p>
     </div>
@@ -118,10 +112,10 @@
       </div>
     </div>
 
-    <!-- Interception (règle HITSTER : contester un placement avec 1 jeton) -->
+    <!-- Contestation (règle HITSTER : crier « HITSTER » et poser 1 jeton) -->
     <div id="steal-modal" class="reveal-modal hidden">
       <div class="reveal-card">
-        <div class="reveal-verdict">🃏 Interception ?</div>
+        <div class="reveal-verdict">🃏 Quelqu'un crie « HITSTER » ?</div>
         <div id="steal-info" class="reveal-info"></div>
         <div id="steal-buttons" class="steal-buttons"></div>
       </div>
@@ -140,8 +134,8 @@
     </div>
   </section>
 
-  <script src="js/tracks.js?v=4"></script>
-  <script src="js/app.js?v=4"></script>
+  <script src="js/tracks.js?v=5"></script>
+  <script src="js/app.js?v=5"></script>
   <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
 </body>
 </html>

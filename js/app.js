@@ -10,8 +10,8 @@ const GENRE_LABELS = {
 };
 
 const START_TOKENS = 2;   // jetons HITSTER de départ par joueur
-const SKIP_COST = 1;      // passer un morceau
-const STEAL_COST = 1;     // intercepter un placement adverse
+const MAX_TOKENS = 5;     // un joueur ne peut jamais détenir plus de 5 jetons
+const STEAL_COST = 1;     // contester le placement d'un adversaire
 const BUY_COST = 3;       // carte ajoutée directement à sa frise
 
 /* ---------- État global ---------- */
@@ -33,9 +33,8 @@ const state = {
   phase: "setup",           // setup | listen | steal | steal-place | reveal | end
   hasListened: false,
   pendingSlot: null,        // emplacement choisi par le joueur actif, avant révélation
-  thief: null,              // { teamIdx, slotIndex } si un adversaire intercepte
+  thief: null,              // { teamIdx, slotIndex } si un adversaire conteste (slot sur la frise du joueur actif)
   lastResult: null,
-  guess: { transcript: "", titreOk: false, artisteOk: false, guessed: false },
 };
 
 /* ---------- Lecteur Spotify (iFrame API) ---------- */
@@ -105,6 +104,23 @@ function startCountdown() {
     if (remaining <= 0) clearInterval(countdownInterval);
   }, 100);
 }
+
+/* ---------- Wake Lock : l'écran reste allumé pendant la partie ---------- */
+let wakeLock = null;
+
+async function requestWakeLock() {
+  if (!("wakeLock" in navigator)) return;
+  try { wakeLock = await navigator.wakeLock.request("screen"); } catch (_) { /* refusé : tant pis */ }
+}
+
+function releaseWakeLock() {
+  if (wakeLock) { wakeLock.release().catch(() => {}); wakeLock = null; }
+}
+
+// Le verrou saute quand l'onglet passe en arrière-plan : on le reprend au retour
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible" && state.phase !== "setup") requestWakeLock();
+});
 
 /* ---------- Filtrage et construction de la pioche ---------- */
 function filterPool(cfg) {
@@ -291,6 +307,7 @@ function startGame() {
     if (starter) team.timeline.push(starter);
   });
   state.currentTeamIdx = 0;
+  requestWakeLock();
   showScreen("game");
   beginTurn();
 }
@@ -303,28 +320,17 @@ function beginTurn() {
   state.pendingSlot = null;
   state.thief = null;
   state.lastResult = null;
-  state.guess = { transcript: "", titreOk: false, artisteOk: false, guessed: false };
   stopPlayback(); // coupe l'audio du tour précédent (lecture pendant la révélation)
-  stopMic();
   loadTrackInPlayer(state.currentTrack);
   document.getElementById("player-overlay").classList.remove("hidden");
   document.getElementById("countdown").classList.add("hidden");
   document.getElementById("reveal-modal").classList.add("hidden");
   document.getElementById("steal-modal").classList.add("hidden");
   document.getElementById("btn-listen").textContent = "▶ Écouter l'extrait (20 s)";
-  document.getElementById("guess-zone").classList.add("hidden");
-  document.getElementById("guess-transcript").textContent = "";
   renderGame();
 }
 
-/* ---------- Jetons HITSTER : passer / carte gratuite ---------- */
-function onSkipClick() {
-  const team = state.teams[state.currentTeamIdx];
-  if (state.phase !== "listen" || team.tokens < SKIP_COST) return;
-  team.tokens -= SKIP_COST;
-  beginTurn(); // même joueur, nouveau morceau (l'ancien est défaussé)
-}
-
+/* ---------- Jetons HITSTER : carte gratuite ---------- */
 function onBuyClick() {
   const team = state.teams[state.currentTeamIdx];
   if (state.phase !== "listen" || team.tokens < BUY_COST || state.deck.length === 0) return;
@@ -343,115 +349,9 @@ function onListenClick() {
   playExtract();
   if (!state.hasListened) {
     state.hasListened = true;
-    document.getElementById("guess-zone").classList.remove("hidden");
     renderGame(); // active les emplacements de placement
   }
   document.getElementById("btn-listen").textContent = "↻ Réécouter l'extrait";
-}
-
-/* ---------- Paris bonus à l'oral (reconnaissance vocale) ---------- */
-const SpeechRec = window.SpeechRecognition || window.webkitSpeechRecognition || null;
-let recognition = null;
-
-function normGuess(s) {
-  return String(s).toLowerCase()
-    .normalize("NFD").replace(/[̀-ͯ]/g, "")
-    .replace(/\(.*?\)|\[.*?\]/g, " ")
-    .replace(/[^a-z0-9]+/g, " ")
-    .trim();
-}
-
-function levenshtein(a, b) {
-  const m = a.length, n = b.length;
-  if (!m || !n) return Math.max(m, n);
-  let prev = Array.from({ length: n + 1 }, (_, j) => j);
-  for (let i = 1; i <= m; i++) {
-    const cur = [i];
-    for (let j = 1; j <= n; j++) {
-      cur[j] = Math.min(prev[j] + 1, cur[j - 1] + 1, prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1));
-    }
-    prev = cur;
-  }
-  return prev[n];
-}
-
-// La réponse (titre ou artiste) est-elle contenue dans la phrase prononcée ?
-function matchInTranscript(transcript, answer) {
-  const t = normGuess(transcript);
-  if (!t) return false;
-  // "Luis Fonsi feat. Daddy Yankee" : l'artiste principal suffit
-  const variants = new Set([normGuess(answer), normGuess(answer.split(/\bfeat\.?\b/i)[0])]);
-  // Article initial facultatif ("champs élysées" vaut "Les Champs-Élysées")
-  for (const v of [...variants]) {
-    const stripped = v.replace(/^(les|le|la|l|un|une|des|du|de|d)\s+/, "");
-    if (stripped) variants.add(stripped);
-  }
-  const words = t.split(" ");
-  for (const a of variants) {
-    if (!a) continue;
-    if (t.includes(a)) return true;
-    // Fenêtre glissante de mots, comparée sans espaces : la reconnaissance vocale
-    // découpe parfois autrement ("papa où t es" vs "Papaoutai")
-    const aFlat = a.replace(/ /g, "");
-    const k = a.split(" ").length;
-    const tol = aFlat.length >= 8 ? 2 : 1;
-    for (const size of [k - 1, k, k + 1, k + 2]) {
-      if (size < 1) continue;
-      for (let i = 0; i + size <= words.length; i++) {
-        const win = words.slice(i, i + size).join("");
-        if (win.length >= 3 && levenshtein(win, aFlat) <= tol) return true;
-      }
-    }
-  }
-  return false;
-}
-
-function evaluateTranscripts(alternatives) {
-  const track = state.currentTrack;
-  state.guess.guessed = true;
-  state.guess.transcript = alternatives[0] || "";
-  state.guess.titreOk = alternatives.some((t) => matchInTranscript(t, track.titre));
-  state.guess.artisteOk = alternatives.some((t) => matchInTranscript(t, track.artiste));
-  document.getElementById("guess-transcript").textContent =
-    `Vous avez dit : « ${state.guess.transcript} » — verdict à la révélation ! (recliquez sur 🎤 pour réessayer)`;
-}
-
-function startMic() {
-  if (!SpeechRec || state.phase !== "listen") return;
-  stopMic();
-  const btn = document.getElementById("btn-mic");
-  recognition = new SpeechRec();
-  recognition.lang = "fr-FR";
-  recognition.interimResults = false;
-  recognition.maxAlternatives = 5;
-  btn.textContent = "🎙️ Parlez… (titre et artiste)";
-  btn.classList.add("listening");
-  recognition.onresult = (e) => {
-    const alts = Array.from(e.results[0]).map((r) => r.transcript);
-    evaluateTranscripts(alts);
-  };
-  recognition.onerror = (e) => {
-    const msg = e.error === "not-allowed"
-      ? "Micro refusé — vous pourrez valider à la main lors de la révélation."
-      : "Rien entendu — recliquez sur 🎤 pour réessayer.";
-    document.getElementById("guess-transcript").textContent = msg;
-  };
-  recognition.onend = () => {
-    btn.textContent = "🎤 Deviner à l'oral";
-    btn.classList.remove("listening");
-  };
-  try { recognition.start(); } catch (_) { /* déjà démarré */ }
-}
-
-function stopMic() {
-  if (recognition) {
-    recognition.onresult = recognition.onerror = recognition.onend = null;
-    try { recognition.abort(); } catch (_) {}
-    recognition = null;
-  }
-  const btn = document.getElementById("btn-mic");
-  btn.textContent = "🎤 Deviner à l'oral";
-  btn.classList.remove("listening");
 }
 
 /* ---------- Placement, interception (règle HITSTER) et révélation ---------- */
@@ -469,7 +369,6 @@ function placeAt(slotIndex) {
   }
   if (state.phase !== "listen" || !state.hasListened) return;
   stopPlayback();
-  stopMic();
   state.pendingSlot = slotIndex;
 
   // Interception : les adversaires avec au moins 1 jeton peuvent contester
@@ -488,14 +387,14 @@ function openStealModal(challengers) {
   document.getElementById("steal-info").innerHTML =
     `<strong style="color:${active.color}">${escapeHtml(active.name)}</strong> a placé la carte
      (emplacement marqué <strong>?</strong> sur sa frise).<br>
-     Un adversaire pense que c'est raté ? Interceptez pour ${STEAL_COST} 🪙 :
-     si le placement est bien faux et que le vôtre est juste, la carte est pour vous !`;
+     Un adversaire pense que c'est raté ? Criez « HITSTER » et posez ${STEAL_COST} 🪙 sur sa frise,
+     à l'endroit où la carte va vraiment : si vous avez raison, elle est pour vous !`;
   const box = document.getElementById("steal-buttons");
   box.innerHTML = "";
   challengers.forEach(({ team, idx }) => {
     const b = document.createElement("button");
     b.className = "btn";
-    b.innerHTML = `🃏 <strong style="color:${team.color}">${escapeHtml(team.name)}</strong> intercepte (−${STEAL_COST} 🪙)`;
+    b.innerHTML = `🃏 <strong style="color:${team.color}">${escapeHtml(team.name)}</strong> crie HITSTER (−${STEAL_COST} 🪙)`;
     b.onclick = () => startSteal(idx);
     box.append(b);
   });
@@ -524,9 +423,14 @@ function resolveReveal() {
   if (correct) {
     team.timeline.splice(state.pendingSlot, 0, state.currentTrack);
   } else if (state.thief) {
-    const thiefTeam = state.teams[state.thief.teamIdx];
-    stolen = isSlotCorrect(thiefTeam.timeline, state.thief.slotIndex, year);
-    if (stolen) thiefTeam.timeline.splice(state.thief.slotIndex, 0, state.currentTrack);
+    // Le contestataire a désigné le « vrai » emplacement sur la frise du joueur actif ;
+    // s'il a raison, la carte rejoint sa propre frise, bien placée.
+    stolen = isSlotCorrect(team.timeline, state.thief.slotIndex, year);
+    if (stolen) {
+      const thiefTeam = state.teams[state.thief.teamIdx];
+      const idx = thiefTeam.timeline.findIndex((t) => t.annee > year);
+      thiefTeam.timeline.splice(idx === -1 ? thiefTeam.timeline.length : idx, 0, state.currentTrack);
+    }
   }
   state.lastResult = { correct, slotIndex: state.pendingSlot, stolen };
   state.phase = "reveal";
@@ -546,19 +450,17 @@ function renderReveal(correct, stolen, team) {
 
   const owner = correct ? team : stolen ? thiefTeam : null;
   const won = owner && owner.timeline.length >= state.config.target;
-  const g = state.guess;
   document.getElementById("reveal-info").innerHTML = `
     <span class="big-year">${t.annee}</span>
     <span class="track-name">${escapeHtml(t.titre)}</span><br>
     <span class="track-artist">${escapeHtml(t.artiste)}</span><br>
-    ${g.guessed ? `<span class="guess-transcript">Vous avez dit : « ${escapeHtml(g.transcript)} »</span><br>` : ""}
     <div class="reveal-bonus">
-      <button id="toggle-titre" class="bonus-toggle${g.titreOk ? " on" : ""}">🎯 Titre trouvé</button>
-      <button id="toggle-artiste" class="bonus-toggle${g.artisteOk ? " on" : ""}">🎯 Artiste trouvé</button>
+      <button id="toggle-titre" class="bonus-toggle">🎯 Titre trouvé</button>
+      <button id="toggle-artiste" class="bonus-toggle">🎯 Artiste trouvé</button>
     </div>
-    <span class="bonus-hint">Titre + artiste tous les deux corrects = +1 🪙 — corrigez à la main si besoin.</span><br>
-    ${thiefTeam && !correct && !stolen ? `<span class="track-artist">${escapeHtml(thiefTeam.name)} a intercepté… et s'est trompé aussi. Jeton perdu !</span><br>` : ""}
-    ${thiefTeam && correct ? `<span class="track-artist">${escapeHtml(thiefTeam.name)} a intercepté pour rien : le placement était bon. Jeton perdu !</span><br>` : ""}
+    <span class="bonus-hint">${escapeHtml(team.name)} a nommé le titre et l'artiste ? Cochez les deux = +1 🪙 (${MAX_TOKENS} max), même si la carte est mal placée.</span><br>
+    ${thiefTeam && !correct && !stolen ? `<span class="track-artist">${escapeHtml(thiefTeam.name)} a contesté… mais s'est trompé d'emplacement aussi. Jeton perdu !</span><br>` : ""}
+    ${thiefTeam && correct ? `<span class="track-artist">${escapeHtml(thiefTeam.name)} a contesté pour rien : le placement était bon. Jeton perdu !</span><br>` : ""}
     ${owner
       ? `<strong style="color:${owner.color}">${escapeHtml(owner.name)}</strong> ${stolen ? "vole la carte" : "garde la carte"} : ${owner.timeline.length} / ${state.config.target}`
       : "Le morceau est écarté."}
@@ -572,7 +474,7 @@ function renderReveal(correct, stolen, team) {
   btn.onclick = () => {
     const both = document.getElementById("toggle-titre").classList.contains("on")
       && document.getElementById("toggle-artiste").classList.contains("on");
-    if (both) team.tokens += 1;
+    if (both) team.tokens = Math.min(MAX_TOKENS, team.tokens + 1);
     if (won) { endGame(false); return; }
     state.currentTeamIdx = (state.currentTeamIdx + 1) % state.teams.length;
     beginTurn();
@@ -607,14 +509,16 @@ function endGame(deckExhausted) {
 function renderGame() {
   const team = state.teams[state.currentTeamIdx];
   const stealing = state.phase === "steal-place";
-  // Pendant une interception, c'est la frise du voleur qui est affichée et jouable
-  const shownTeam = stealing ? state.teams[state.thief.teamIdx] : team;
+  // Même pendant une contestation, c'est la frise du joueur actif qui est affichée :
+  // le contestataire y désigne l'emplacement où la carte va vraiment (règle HITSTER)
+  const shownTeam = team;
+  const thiefTeam = stealing ? state.teams[state.thief.teamIdx] : null;
 
   const banner = document.getElementById("turn-banner");
   banner.textContent = stealing
-    ? `🃏 ${shownTeam.name} intercepte — passez-lui le téléphone !`
+    ? `🃏 ${thiefTeam.name} conteste — passez-lui le téléphone !`
     : `📱 Au tour de ${team.name}`;
-  banner.style.borderLeftColor = shownTeam.color;
+  banner.style.borderLeftColor = stealing ? thiefTeam.color : shownTeam.color;
 
   document.getElementById("scoreboard").innerHTML = state.teams.map((t) => `
     <span class="score-chip">
@@ -628,14 +532,12 @@ function renderGame() {
     state.phase === "reveal" || state.phase === "steal"
       ? ""
       : stealing
-        ? "Place la carte là où TU penses qu'elle va, dans TA frise ⊕"
+        ? `Pose ton jeton sur la frise de ${team.name} : clique l'emplacement ⊕ où la carte va VRAIMENT`
         : state.hasListened
-          ? "Annoncez titre + artiste au micro 🎤 (bonus 🪙), puis placez le morceau sur un emplacement ⊕"
+          ? "Annoncez titre + artiste à voix haute (bonus 🪙 à la révélation), puis placez le morceau sur un emplacement ⊕"
           : "Écoutez l'extrait, puis placez le morceau sur votre frise.";
 
-  const skip = document.getElementById("btn-skip");
   const buy = document.getElementById("btn-buy");
-  skip.disabled = state.phase !== "listen" || team.tokens < SKIP_COST;
   buy.disabled = state.phase !== "listen" || team.tokens < BUY_COST || state.deck.length === 0;
 
   document.getElementById("active-timeline-title").innerHTML =
@@ -720,19 +622,12 @@ function escapeHtml(s) {
 
 /* ---------- Initialisation ---------- */
 document.getElementById("btn-listen").onclick = onListenClick;
-document.getElementById("btn-skip").onclick = onSkipClick;
 document.getElementById("btn-buy").onclick = onBuyClick;
-document.getElementById("btn-mic").onclick = startMic;
-if (!SpeechRec) {
-  // Navigateur sans reconnaissance vocale : annonce à l'oral quand même,
-  // la validation se fait à la main sur l'écran de révélation.
-  document.getElementById("btn-mic").classList.add("hidden");
-  document.querySelector(".guess-label").innerHTML =
-    "Bonus HITSTER — annoncez le titre <strong>et</strong> l'artiste à voix haute, validation à la révélation (les deux corrects = +1 jeton 🪙)";
-}
 document.getElementById("btn-replay").onclick = startGame;
 document.getElementById("btn-new-game").onclick = () => {
   stopPlayback();
+  releaseWakeLock();
+  state.phase = "setup";
   showScreen("setup");
   updatePoolInfo();
 };

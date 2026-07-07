@@ -278,22 +278,7 @@ body {
   gap: 10px;
 }
 
-/* ---------- Paris bonus à l'oral ---------- */
-.guess-zone { margin-top: 16px; }
-.guess-label { color: var(--text-dim); font-size: 0.85rem; margin-bottom: 10px; }
-#btn-mic.listening {
-  border-color: var(--danger);
-  color: var(--danger);
-  animation: pulse 1s infinite;
-}
-@keyframes pulse { 50% { opacity: 0.6; } }
-.guess-transcript {
-  margin-top: 10px;
-  color: var(--text-dim);
-  font-size: 0.9rem;
-  font-style: italic;
-  min-height: 1.2em;
-}
+/* ---------- Bonus titre + artiste (validation manuelle) ---------- */
 .reveal-bonus {
   display: flex;
   gap: 10px;
