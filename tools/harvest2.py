@@ -7,7 +7,7 @@ TRACKS_JS = os.path.join(SP, "..", "js", "tracks.js")
 
 from concurrent.futures import ThreadPoolExecutor
 
-SP = UA = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"}
+UA = {"User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)"}
 
 
 # recharge les candidats bruts en refaisant la partie collecte depuis le cache ? Non :
