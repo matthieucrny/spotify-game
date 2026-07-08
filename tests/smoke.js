@@ -22,8 +22,10 @@ global.document = {
   addEventListener() {},
   visibilityState: "visible",
 };
+global.document.body = makeEl();
 global.window = { matchMedia: () => ({ matches: true }) };
 global.navigator = {}; // pas de Wake Lock hors navigateur
+global.fetch = async () => ({ ok: false }); // pas de réseau pendant les tests (pochettes)
 
 (0, eval)(fs.readFileSync(path + "tracks.js", "utf8").replace("const TRACKS", "globalThis.TRACKS"));
 (0, eval)(fs.readFileSync(path + "app.js", "utf8")

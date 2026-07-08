@@ -1,6 +1,6 @@
 # 🎵 Blind Test Chronologique
 
-Jeu musical façon **HITSTER**, pensé pour être joué **à plusieurs sur un même téléphone** (pass-and-play) : écoute à l'aveugle d'un extrait de 20 s, placement chronologique sur sa frise, jetons HITSTER (contester, carte gratuite), victoire à 10 cartes.
+Jeu musical façon **HITSTER**, pensé pour être joué **à plusieurs sur un même téléphone** (pass-and-play) : écoute à l'aveugle d'un extrait de 15 s, placement chronologique sur sa frise, jetons HITSTER (contester, carte gratuite), victoire à 10 cartes.
 
 ## Lancer le jeu
 
@@ -21,7 +21,7 @@ Un seul téléphone, qu'on se passe de main en main. Les frises sont publiques, 
 
 1. **Configuration** : créer les joueurs (nom + couleur), choisir l'origine (mixte / 100 % FR / 70-30 / 100 % inter.), la période, les styles, et le nombre de cartes pour gagner (10 par défaut, comme dans HITSTER).
 2. Chaque joueur démarre avec **une carte révélée** sur sa frise et **2 jetons HITSTER 🪙** (maximum **5 jetons** par joueur, comme dans le jeu original).
-3. À son tour, le joueur clique sur **Écouter** (extrait de 20 s, lecteur masqué), annonce à voix haute le titre et l'artiste s'il pense les connaître, puis clique sur un emplacement **⊕** de sa frise pour placer le morceau.
+3. À son tour, le joueur clique sur **Écouter** (extrait de 15 s, lecteur masqué), annonce à voix haute le titre et l'artiste s'il pense les connaître, puis clique sur un emplacement **⊕** de sa frise pour placer le morceau.
 4. **Contestation 🃏** : une fois la carte placée (marquée « ? »), un adversaire ayant au moins 1 jeton peut **crier « HITSTER »** et poser **1 🪙** : il désigne sur la frise **du joueur actif** l'emplacement où la carte va vraiment selon lui. À la révélation, si le placement du joueur actif était faux et le sien juste, il **prend la carte** (elle rejoint sa propre frise, bien placée). Sinon le jeton est perdu.
 5. **Révélation** : année, titre, artiste et pochette s'affichent. Bien placé → la carte reste ; mal placé → elle est écartée (ou prise par le contestataire).
 6. **Bonus titre + artiste** : à la révélation, si le joueur avait annoncé correctement le titre **et** l'artiste, cochez les deux boutons 🎯 → **+1 jeton 🪙** — même si la carte est mal placée.
@@ -54,9 +54,9 @@ Tous les IDs de la base ont été vérifiés automatiquement contre Spotify (jou
 
 - **HTML/CSS/JS vanilla**, aucun build, aucune dépendance.
 - **Spotify iFrame API** (widget Embed officiel) : gratuit, sans compte Premium ni OAuth. Le lecteur est recouvert d'un cache opaque tant que le morceau n'est pas révélé.
-- L'extrait s'arrête automatiquement à 20 s (minuteur applicatif + événements `playback_update`).
+- L'extrait s'arrête automatiquement à 15 s (minuteur applicatif + événements `playback_update`).
 - La lecture démarre sur clic utilisateur (contrainte autoplay des navigateurs).
-- Sans session Spotify ouverte dans le navigateur, le widget lit un extrait de 30 s — largement suffisant pour les 20 s du jeu.
+- Sans session Spotify ouverte dans le navigateur, le widget lit un extrait de 30 s — largement suffisant pour les 15 s du jeu.
 
 ## Choix faits sur les questions ouvertes (section 7 du cahier des charges)
 

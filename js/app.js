@@ -2,7 +2,7 @@
    Blind Test Chronologique — logique de jeu (V1)
    ============================================================ */
 
-const EXTRACT_MS = 20000; // durée d'écoute de l'extrait
+const EXTRACT_MS = 15000; // durée d'écoute de l'extrait
 const TEAM_COLORS = ["#ff5e7a", "#8b5cf6", "#38bdf8", "#ffb84d", "#2dd4a7", "#f472b6", "#a3e635", "#fb923c"];
 const GENRE_LABELS = {
   pop: "Pop", rock: "Rock", rap: "Rap / Hip-Hop", electro: "Électro",
@@ -105,6 +105,31 @@ function startCountdown() {
     if (remaining <= 5000) box.classList.add("ending"); // alerte visuelle de fin d'extrait
     if (remaining <= 0) clearInterval(countdownInterval);
   }, 100);
+}
+
+/* ---------- Pochettes d'albums (API publique oEmbed Spotify, sans clé) ---------- */
+const coverCache = new Map();
+
+function prefetchCover(track) {
+  if (!track || coverCache.has(track.spotify_uri) || typeof fetch !== "function") return;
+  coverCache.set(track.spotify_uri, ""); // marque comme demandé (évite les doublons)
+  const id = track.spotify_uri.split(":").pop();
+  fetch(`https://open.spotify.com/oembed?url=https://open.spotify.com/track/${id}`)
+    .then((r) => (r.ok ? r.json() : null))
+    .then((data) => {
+      if (data && data.thumbnail_url) {
+        coverCache.set(track.spotify_uri, data.thumbnail_url);
+        if (state.phase !== "setup" && state.phase !== "end") renderGame();
+      }
+    })
+    .catch(() => {}); // hors-ligne : les cartes restent en mode texte
+}
+
+/* ---------- Ambiance : le fond se teinte selon la décennie révélée ---------- */
+function setAmbiance(year) {
+  if (!document.body || !document.body.dataset) return;
+  const decade = Math.min(2020, Math.max(1950, Math.floor(year / 10) * 10));
+  document.body.dataset.decade = String(decade).slice(2); // "50" … "20"
 }
 
 /* ---------- Wake Lock : l'écran reste allumé pendant la partie ---------- */
@@ -306,7 +331,7 @@ function startGame() {
   // Carte de départ révélée pour chaque joueur (comme dans le jeu original)
   state.teams.forEach((team) => {
     const starter = state.deck.pop();
-    if (starter) team.timeline.push(starter);
+    if (starter) { team.timeline.push(starter); prefetchCover(starter); }
   });
   state.currentTeamIdx = 0;
   requestWakeLock();
@@ -324,11 +349,12 @@ function beginTurn() {
   state.lastResult = null;
   stopPlayback(); // coupe l'audio du tour précédent (lecture pendant la révélation)
   loadTrackInPlayer(state.currentTrack);
+  prefetchCover(state.currentTrack); // la pochette sera prête pour la révélation
   document.getElementById("player-overlay").classList.remove("hidden");
   document.getElementById("countdown").classList.add("hidden");
   document.getElementById("reveal-modal").classList.add("hidden");
   document.getElementById("steal-modal").classList.add("hidden");
-  document.getElementById("btn-listen").textContent = "▶ Écouter l'extrait (20 s)";
+  document.getElementById("btn-listen").textContent = "▶ Écouter l'extrait (15 s)";
   renderGame();
 }
 
@@ -338,6 +364,7 @@ function onBuyClick() {
   if (state.phase !== "listen" || team.tokens < BUY_COST || state.deck.length === 0) return;
   team.tokens -= BUY_COST;
   const card = state.deck.pop();
+  prefetchCover(card);
   const idx = team.timeline.findIndex((t) => t.annee > card.annee);
   const pos = idx === -1 ? team.timeline.length : idx;
   team.timeline.splice(pos, 0, card);
@@ -443,6 +470,8 @@ function resolveReveal() {
   // Retour haptique discret au verdict (si le téléphone le permet)
   if (navigator.vibrate) navigator.vibrate(correct ? 30 : [40, 60, 40]);
 
+  setAmbiance(year); // le fond voyage dans la décennie du morceau
+
   // Révèle le lecteur (pochette, titre, artiste visibles)
   document.getElementById("player-overlay").classList.add("hidden");
   renderGame();
@@ -458,21 +487,42 @@ function renderReveal(correct, stolen, team) {
 
   const owner = correct ? team : stolen ? thiefTeam : null;
   const won = owner && owner.timeline.length >= state.config.target;
+  const cover = coverCache.get(t.spotify_uri) || "";
   document.getElementById("reveal-info").innerHTML = `
-    <span class="big-year">${t.annee}</span>
-    <span class="track-name">${escapeHtml(t.titre)}</span><br>
-    <span class="track-artist">${escapeHtml(t.artiste)}</span><br>
-    <div class="reveal-bonus">
-      <button id="toggle-titre" class="bonus-toggle">🎯 Titre trouvé</button>
-      <button id="toggle-artiste" class="bonus-toggle">🎯 Artiste trouvé</button>
+    <div class="flip-stage">
+      <div class="flip-card" id="flip-card">
+        <div class="flip-face flip-back"><span>?</span></div>
+        <div class="flip-face flip-front"${cover ? ` style="background-image:linear-gradient(180deg, rgba(10,6,24,0.2), rgba(10,6,24,0.78)), url('${cover}')"` : ""}>
+          <span class="flip-year">${t.annee}</span>
+          <span class="flip-title">${escapeHtml(t.titre)}</span>
+          <span class="flip-artist">${escapeHtml(t.artiste)}</span>
+        </div>
+      </div>
     </div>
-    <span class="bonus-hint">${escapeHtml(team.name)} a nommé le titre et l'artiste ? Cochez les deux = +1 🪙 (${MAX_TOKENS} max), même si la carte est mal placée.</span><br>
-    ${thiefTeam && !correct && !stolen ? `<span class="track-artist">${escapeHtml(thiefTeam.name)} a contesté… mais s'est trompé d'emplacement aussi. Jeton perdu !</span><br>` : ""}
-    ${thiefTeam && correct ? `<span class="track-artist">${escapeHtml(thiefTeam.name)} a contesté pour rien : le placement était bon. Jeton perdu !</span><br>` : ""}
-    ${owner
-      ? `<strong style="color:${owner.color}">${escapeHtml(owner.name)}</strong> ${stolen ? "vole la carte" : "garde la carte"} : ${owner.timeline.length} / ${state.config.target}`
-      : "Le morceau est écarté."}
+    <div class="reveal-details">
+      <div class="reveal-bonus">
+        <button id="toggle-titre" class="bonus-toggle">🎯 Titre trouvé</button>
+        <button id="toggle-artiste" class="bonus-toggle">🎯 Artiste trouvé</button>
+      </div>
+      <span class="bonus-hint">${escapeHtml(team.name)} a nommé le titre et l'artiste ? Cochez les deux = +1 🪙 (${MAX_TOKENS} max), même si la carte est mal placée.</span><br>
+      ${thiefTeam && !correct && !stolen ? `<span class="track-artist">${escapeHtml(thiefTeam.name)} a contesté… mais s'est trompé d'emplacement aussi. Jeton perdu !</span><br>` : ""}
+      ${thiefTeam && correct ? `<span class="track-artist">${escapeHtml(thiefTeam.name)} a contesté pour rien : le placement était bon. Jeton perdu !</span><br>` : ""}
+      ${owner
+        ? `<strong style="color:${owner.color}">${escapeHtml(owner.name)}</strong> ${stolen ? "vole la carte" : "garde la carte"} : ${owner.timeline.length} / ${state.config.target}`
+        : "Le morceau est écarté."}
+    </div>
   `;
+  // Suspense : la carte arrive face cachée, puis se retourne
+  setTimeout(() => {
+    const fc = document.getElementById("flip-card");
+    if (fc) fc.classList.add("flipped");
+  }, 450);
+  // Le verdict n'apparaît qu'une fois la carte retournée (rejoue l'animation à chaque tour)
+  if (verdict.style) {
+    verdict.style.animation = "none";
+    void verdict.offsetWidth;
+    verdict.style.animation = "";
+  }
   ["toggle-titre", "toggle-artiste"].forEach((id) => {
     const el = document.getElementById(id);
     el.onclick = () => el.classList.toggle("on");
@@ -612,8 +662,13 @@ function renderTimeline(team) {
   addSlot(0);
   team.timeline.forEach((track, i) => {
     const card = document.createElement("div");
-    card.className = "timeline-card" + (i === justPlaced ? " just-placed" : "");
+    const cover = coverCache.get(track.spotify_uri);
+    card.className = "timeline-card" + (i === justPlaced ? " just-placed" : "") + (cover ? " has-cover" : "");
     card.style.borderTopColor = team.color;
+    if (cover) {
+      card.style.backgroundImage =
+        `linear-gradient(180deg, rgba(10,6,24,0.25), rgba(10,6,24,0.85)), url('${cover}')`;
+    }
     card.innerHTML = `
       <span class="year">${track.annee}</span>
       <span class="title">${escapeHtml(track.titre)}</span>
