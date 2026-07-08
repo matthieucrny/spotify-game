@@ -3,7 +3,7 @@
    ============================================================ */
 
 const EXTRACT_MS = 20000; // durée d'écoute de l'extrait
-const TEAM_COLORS = ["#1db954", "#4b9fe8", "#e05563", "#e8b04b", "#a96be8", "#e87bb2", "#4bd0c3", "#e8804b"];
+const TEAM_COLORS = ["#ff5e7a", "#8b5cf6", "#38bdf8", "#ffb84d", "#2dd4a7", "#f472b6", "#a3e635", "#fb923c"];
 const GENRE_LABELS = {
   pop: "Pop", rock: "Rock", rap: "Rap / Hip-Hop", electro: "Électro",
   variete: "Variété", rnb: "R&B / Soul", "disco-funk": "Disco / Funk",
