@@ -96,11 +96,13 @@ function startCountdown() {
   const bar = document.getElementById("countdown-bar");
   const label = document.getElementById("countdown-label");
   box.classList.remove("hidden");
+  box.classList.remove("ending");
   const start = Date.now();
   countdownInterval = setInterval(() => {
     const remaining = Math.max(0, EXTRACT_MS - (Date.now() - start));
     bar.style.transform = `scaleX(${remaining / EXTRACT_MS})`;
     label.textContent = `${Math.ceil(remaining / 1000)} s`;
+    if (remaining <= 5000) box.classList.add("ending"); // alerte visuelle de fin d'extrait
     if (remaining <= 0) clearInterval(countdownInterval);
   }, 100);
 }
@@ -350,6 +352,9 @@ function onListenClick() {
   if (!state.hasListened) {
     state.hasListened = true;
     renderGame(); // active les emplacements de placement
+    // Sur téléphone, la frise est sous la ligne de flottaison : on l'amène en vue
+    const tl = document.getElementById("active-timeline");
+    if (tl.scrollIntoView) tl.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
   document.getElementById("btn-listen").textContent = "↻ Réécouter l'extrait";
 }
@@ -435,6 +440,9 @@ function resolveReveal() {
   state.lastResult = { correct, slotIndex: state.pendingSlot, stolen };
   state.phase = "reveal";
 
+  // Retour haptique discret au verdict (si le téléphone le permet)
+  if (navigator.vibrate) navigator.vibrate(correct ? 30 : [40, 60, 40]);
+
   // Révèle le lecteur (pochette, titre, artiste visibles)
   document.getElementById("player-overlay").classList.add("hidden");
   renderGame();
@@ -482,6 +490,21 @@ function renderReveal(correct, stolen, team) {
   document.getElementById("reveal-modal").classList.remove("hidden");
 }
 
+function launchConfetti() {
+  const box = document.getElementById("confetti");
+  box.innerHTML = "";
+  const emojis = ["🎉", "🎊", "🎵", "🎶", "⭐", "🪙"];
+  for (let i = 0; i < 36; i++) {
+    const s = document.createElement("span");
+    s.textContent = emojis[i % emojis.length];
+    s.style.left = `${Math.random() * 100}%`;
+    s.style.animationDuration = `${2.2 + Math.random() * 2.5}s`;
+    s.style.animationDelay = `${Math.random() * 1.2}s`;
+    box.append(s);
+  }
+  setTimeout(() => { box.innerHTML = ""; }, 7000); // nettoyage après la pluie
+}
+
 function endGame(deckExhausted) {
   state.phase = "end";
   stopPlayback();
@@ -492,6 +515,7 @@ function endGame(deckExhausted) {
   document.getElementById("end-title").textContent = deckExhausted
     ? "🎵 Pioche épuisée — fin de partie !"
     : `🏆 ${winner.name} remporte la partie !`;
+  if (!deckExhausted) launchConfetti();
 
   const medals = ["🥇", "🥈", "🥉"];
   document.getElementById("end-ranking").innerHTML = ranking.map((team, i) => `
@@ -515,16 +539,27 @@ function renderGame() {
   const thiefTeam = stealing ? state.teams[state.thief.teamIdx] : null;
 
   const banner = document.getElementById("turn-banner");
-  banner.textContent = stealing
+  const bannerText = stealing
     ? `🃏 ${thiefTeam.name} conteste — passez-lui le téléphone !`
     : `📱 Au tour de ${team.name}`;
-  banner.style.borderLeftColor = stealing ? thiefTeam.color : shownTeam.color;
+  if (banner.textContent !== bannerText && banner.style.setProperty) {
+    // Nouveau tour ou contestation : rejoue l'animation d'entrée du bandeau
+    banner.style.animation = "none";
+    void banner.offsetWidth;
+    banner.style.animation = "";
+  }
+  banner.textContent = bannerText;
+  if (banner.style.setProperty) {
+    banner.style.setProperty("--team-color", stealing ? thiefTeam.color : team.color);
+  }
 
+  const spotlight = stealing ? thiefTeam : team;
   document.getElementById("scoreboard").innerHTML = state.teams.map((t) => `
-    <span class="score-chip">
+    <span class="score-chip${t === spotlight ? " active" : ""}" style="--team-color:${t.color}">
       <span class="dot" style="background:${t.color}"></span>
       ${escapeHtml(t.name)} <strong>${t.timeline.length}</strong>/${state.config.target}
       <span class="bonus-pts">· ${t.tokens} 🪙</span>
+      <span class="chip-bar"><span style="width:${Math.min(100, (t.timeline.length / state.config.target) * 100)}%"></span></span>
     </span>
   `).join("");
 
