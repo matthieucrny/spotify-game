@@ -31,16 +31,20 @@ def norm(s):
 DROP_PLAYLIST = {
     ("dusty springfield", "spooky"),          # version incertaine
     ("britney spears", "stronger"),           # cap artiste
-    ("eminem", "till i collapse"),            # cap artiste
     ("madonna", "don t tell me"),             # cap artiste
     ("madonna", "4 minutes"),                 # cap artiste
-    ("black eyed peas", "meet me halfway"),   # cap artiste
-    ("coldplay", "clocks"),                   # cap artiste
-    ("coldplay", "fix you"),
-    ("coldplay", "paradise"),
+    ("coldplay", "paradise"),                 # cap artiste
     ("coldplay", "adventure of a lifetime"),
     ("coldplay", "hymn for the weekend"),
-    ("adele", "skyfall"),                     # cap artiste
+    # vague 2
+    ("faith hill", "this kiss"),              # country, année suspecte
+    ("michael jackson", "heal the world"),    # cap artiste (MJ en garde 6)
+    ("michael jackson", "they don t care about us"),
+    ("michael jackson", "you are not alone"),
+    ("michael jackson", "earth song"),
+    ("matchbox twenty", "3am"),               # cap artiste
+    ("the goo goo dolls", "slide"),           # cap artiste
+    ("red hot chili peppers", "otherside"),   # cap artiste
 }
 
 # ---------- Corrections d'années (date Spotify = réédition/album tardif) ----------
@@ -76,6 +80,9 @@ YEAR_FIX = {
     ("sean paul", "no lie"): 2016,
     ("lewis capaldi", "someone you loved"): 2018,
     ("post malone", "sunflower spider man into the spider verse"): 2018,
+    # vague 2 (playlists)
+    ("gala", "freed from desire"): 1996,
+    ("ace of base", "all that she wants"): 1992,
 }
 
 # ---------- Titres affichés (nettoyage des suffixes techniques) ----------
@@ -138,6 +145,33 @@ GENRE_BY_ARTIST = {
     "portugal the man": "rock", "billie eilish": "pop",
     "camila cabello": "pop", "kendrick lamar": "rap", "harry styles": "pop",
     "lewis capaldi": "pop", "post malone": "rap", "taylor swift": "pop",
+    # vague 2 (surtout All Out 90s)
+    "depeche mode": "electro", "the smiths": "rock", "sting": "pop",
+    "technotronic": "electro", "ac dc": "rock", "mc hammer": "rap",
+    "roxette": "pop", "scorpions": "rock", "bryan adams": "rock",
+    "lenny kravitz": "rock", "pearl jam": "rock", "r e m": "rock",
+    "simply red": "pop", "spin doctors": "rock", "u2": "rock",
+    "blind melon": "rock", "bon jovi": "rock", "dr dre": "rap",
+    "the cure": "rock", "whitney houston": "rnb", "ace of base": "pop",
+    "counting crows": "rock", "celine dion": "pop", "duran duran": "pop",
+    "mazzy star": "rock", "big mountain": "pop", "green day": "rock",
+    "seal": "rnb", "soundgarden": "rock", "tlc": "rnb",
+    "alanis morissette": "rock", "luniz": "rap", "mariah carey": "rnb",
+    "the smashing pumpkins": "rock", "blackstreet": "rnb", "fugees": "rap",
+    "mark morrison": "rnb", "matchbox twenty": "rock", "robert miles": "electro",
+    "spice girls": "pop", "the cardigans": "pop", "the wallflowers": "rock",
+    "toni braxton": "rnb", "aqua": "pop", "backstreet boys": "pop",
+    "blur": "rock", "foo fighters": "rock", "gala": "electro",
+    "meredith brooks": "rock", "natalie imbruglia": "pop",
+    "robbie williams": "pop", "sixpence none the richer": "pop",
+    "the notorious b i g": "rap", "the verve": "rock",
+    "third eye blind": "rock", "will smith": "rap", "2pac": "rap",
+    "brandy": "rnb", "cher": "pop", "ms lauryn hill": "rap",
+    "new radicals": "pop", "the goo goo dolls": "rock",
+    "the offspring": "rock", "bloodhound gang": "rock",
+    "destiny s child": "rnb", "dido": "pop", "ricky martin": "pop",
+    "smash mouth": "rock", "jimmy eat world": "rock", "the game": "rap",
+    "sean kingston": "rnb", "miley cyrus": "pop", "michael jackson": "pop",
 }
 
 # ---------- Tops artistes : sélection manuelle (hits uniquement) ----------
@@ -299,6 +333,118 @@ KEEP_ARTIST = {
     ("edith piaf", "la foule"): {"annee": 1957},
     ("edith piaf", "milord"): {"annee": 1959},
     ("edith piaf", "padam padam"): {"annee": 1951},
+    # ---- vague 2 (tops artistes, base 417 comme graine) ----
+    ("angele", "tout oublier"): {},
+    ("angele", "ta reine"): {},
+    ("angele", "bruxelles je t aime"): {},
+    ("aretha franklin", "think"): {},
+    ("aretha franklin", "chain of fools"): {"annee": 1967},
+    ("ariana grande", "into you"): {},
+    ("ariana grande", "thank u next"): {"annee": 2018},
+    ("avicii", "addicted to you"): {},
+    ("avicii", "sos"): {},
+    ("aya nakamura", "comportement"): {},
+    ("aya nakamura", "copines"): {},
+    ("aya nakamura", "pookie"): {},
+    ("aya nakamura", "jolie nana"): {},
+    ("benny blanco", "eastside"): {"genre": "pop"},
+    ("bob dylan", "mr tambourine man"): {},
+    ("bob dylan", "hurricane"): {},
+    ("calvin harris", "one kiss"): {"annee": 2018},
+    ("calvin harris", "how deep is your love"): {"annee": 2015},
+    ("carly rae jepsen", "i really like you"): {},
+    ("the chainsmokers", "something just like this"): {},
+    ("the chainsmokers", "paris"): {},
+    ("clean bandit", "solo"): {"genre": "electro", "origine": "international"},
+    ("david guetta", "sexy bitch"): {"annee": 2009},
+    ("david guetta", "i m good"): {},
+    ("demi lovato", "heart attack"): {},
+    ("demi lovato", "sorry not sorry"): {},
+    ("dionne warwick", "do you know the way to san jose"): {},
+    ("dionne warwick", "heartbreaker"): {},
+    ("drake", "one dance"): {},
+    ("dua lipa", "fever"): {"origine": "international", "genre": "pop"},
+    ("ed sheeran", "castle on the hill"): {},
+    ("ed sheeran", "bad habits"): {},
+    ("empire of the sun", "we are the people"): {},
+    ("flo rida", "club can t handle me"): {},
+    ("flo rida", "whistle"): {},
+    ("gims", "hola senorita"): {},
+    ("harry styles", "sign of the times"): {},
+    ("harry styles", "adore you"): {},
+    ("harry styles", "as it was"): {},
+    ("hozier", "too sweet"): {},
+    ("imagine dragons", "radioactive"): {},
+    ("imagine dragons", "demons"): {},
+    ("imagine dragons", "enemy"): {"annee": 2021},
+    ("j cole", "middle child"): {},
+    ("jay z", "run this town"): {},
+    ("jay z", "ni as in paris"): {},
+    ("jennifer lopez", "on the floor"): {"origine": "international", "genre": "pop"},
+    ("john legend", "ordinary people"): {},
+    ("johnny cash", "i walk the line"): {"annee": 1956},
+    ("johnny cash", "hurt"): {},
+    ("justin bieber", "baby"): {},
+    ("justin bieber", "sorry"): {},
+    ("justin bieber", "love yourself"): {},
+    ("kanye west", "runaway"): {},
+    ("katy perry", "i kissed a girl"): {},
+    ("katy perry", "california gurls"): {},
+    ("katy perry", "firework"): {},
+    ("kendrick lamar", "humble"): {},
+    ("kendrick lamar", "not like us"): {},
+    ("kesha", "your love is my drug"): {},
+    ("kesha", "die young"): {},
+    ("khalid", "location"): {},
+    ("lady gaga", "shallow"): {},
+    ("lady gaga", "die with a smile"): {"annee": 2024},
+    ("lana del rey", "video games"): {},
+    ("lana del rey", "summertime sadness"): {"annee": 2012},
+    ("lesley gore", "it s my party"): {},
+    ("lewis capaldi", "before you go"): {},
+    ("the kid laroi", "stay"): {"origine": "international", "genre": "pop"},
+    ("the lovin spoonful", "summer in the city"): {},
+    ("mark ronson", "valerie version revisited"):
+        {"titre": "Valerie (feat. Amy Winehouse)", "genre": "pop"},
+    ("marshmello", "silence"): {"origine": "international", "genre": "electro"},
+    ("mgmt", "electric feel"): {},
+    ("mgmt", "little dark age"): {"annee": 2017},
+    ("miguel", "adorn"): {},
+    ("maneskin", "i wanna be your slave"): {},
+    ("maneskin", "zitti e buoni"): {},
+    ("naughty boy", "la la la"): {"origine": "international", "genre": "pop"},
+    ("onerepublic", "apologize"): {},
+    ("onerepublic", "secrets"): {},
+    ("onerepublic", "i ain t worried"): {"annee": 2022},
+    ("owl city", "good time"): {"origine": "international", "genre": "pop"},
+    ("pitbull", "i know you want me"): {},
+    ("post malone", "rockstar"): {"annee": 2017},
+    ("post malone", "congratulations"): {},
+    ("queen", "we are the champions"): {},
+    ("roy orbison", "crying"): {"annee": 1961},
+    ("roy orbison", "you got it"): {},
+    ("sam smith", "stay with me"): {},
+    ("sam smith", "unholy"): {"annee": 2022},
+    ("shawn mendes", "senorita"): {"origine": "international", "genre": "pop"},
+    ("tame impala", "let it happen"): {},
+    ("taylor swift", "shake it off"): {},
+    ("taylor swift", "blank space"): {},
+    ("taylor swift", "cruel summer"): {},
+    ("taylor swift", "cardigan"): {},
+    ("the beach boys", "wouldn t it be nice"): {},
+    ("the beach boys", "good vibrations"): {"annee": 1966},
+    ("the beatles", "let it be"): {},
+    ("the beatles", "come together"): {},
+    ("the beatles", "here comes the sun"): {},
+    ("the neighbourhood", "sweater weather"): {},
+    ("the ronettes", "baby i love you"): {"annee": 1963},
+    ("the supremes", "where did our love go"): {},
+    ("the supremes", "stop in the name of love"): {},
+    ("the weeknd", "starboy"): {},
+    ("timbaland", "give it to me"): {},
+    ("travis scott", "sicko mode"): {},
+    ("usher", "yeah"): {},
+    ("usher", "omg"): {},
 }
 
 
@@ -329,7 +475,7 @@ def main():
                 continue
             used["keep"].add(key)
             ov = KEEP_ARTIST[key]
-            origine = c["origine"]
+            origine = ov.get("origine") or c["origine"]
             genre = ov.get("genre") or c["genre"]
             if not origine or not genre:
                 sys.exit(f"origine/genre manquant pour : {key}")
@@ -348,12 +494,29 @@ def main():
                     "origine": origine, "genre": genre,
                     "spotify_uri": c["spotify_uri"], "_main": key[0]})
 
-    # clés non consommées = faute de frappe dans les tables
+    # clés non consommées = faute de frappe… sauf si le morceau est déjà dans la base
+    # (le script est ré-exécutable : les vagues précédentes restent dans les tables)
+    def already_in_base(key, titre_override=None):
+        artist, title = key
+        if (artist, title) in existing_keys:
+            return True
+        return bool(titre_override) and (artist, norm(titre_override)) in existing_keys
+
+    def override_title(key):
+        return (KEEP_ARTIST.get(key) or {}).get("titre") or TITLE_FIX.get(key)
+
     problems = []
-    problems += [f"DROP_PLAYLIST sans effet : {k}" for k in DROP_PLAYLIST - used["drop"]]
-    problems += [f"KEEP_ARTIST sans effet : {k}" for k in set(KEEP_ARTIST) - used["keep"]]
-    problems += [f"YEAR_FIX sans effet : {k}" for k in set(YEAR_FIX) - used["year"]]
-    problems += [f"TITLE_FIX sans effet : {k}" for k in set(TITLE_FIX) - used["title"]]
+    problems += [f"DROP_PLAYLIST sans effet : {k}"
+                 for k in DROP_PLAYLIST - used["drop"] if not already_in_base(k)]
+    problems += [f"KEEP_ARTIST sans effet : {k}"
+                 for k in set(KEEP_ARTIST) - used["keep"]
+                 if not already_in_base(k, override_title(k))]
+    problems += [f"YEAR_FIX sans effet : {k}"
+                 for k in set(YEAR_FIX) - used["year"]
+                 if not already_in_base(k, override_title(k))]
+    problems += [f"TITLE_FIX sans effet : {k}"
+                 for k in set(TITLE_FIX) - used["title"]
+                 if not already_in_base(k, TITLE_FIX.get(k))]
     if problems:
         print("\n".join(problems))
         sys.exit(1)

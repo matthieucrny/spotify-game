@@ -30,7 +30,7 @@ Un seul téléphone, qu'on se passe de main en main. Les frises sont publiques, 
 
 ## Base de morceaux
 
-`js/tracks.js` contient **417 morceaux** (114 français / 303 internationaux, 1947 → 2024), chacun tagué :
+`js/tracks.js` contient **627 morceaux** (122 français / 505 internationaux, 1947 → 2024), chacun tagué :
 
 ```js
 {
@@ -60,7 +60,7 @@ Tous les IDs de la base ont été vérifiés automatiquement contre Spotify (jou
 
 ## Choix faits sur les questions ouvertes (section 7 du cahier des charges)
 
-1. **417 morceaux** (60 au lancement, élargis via le pipeline de récolte + relecture).
+1. **627 morceaux** (60 au lancement, élargis en deux vagues de récolte + relecture).
 2. Base constituée automatiquement (recherche + validation des URI contre Spotify) ; enrichissable à la main.
 3. Le mode « sans thème » existe : laisser *Mixte libre* + *Toutes années* + aucun style coché.
 4. Cartes pour gagner **paramétrable dès la V1** (3 à 20, défaut 10).
