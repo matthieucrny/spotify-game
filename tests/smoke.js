@@ -81,12 +81,16 @@ assert(t0.timeline.length === 3, "la carte volée rejoint la frise du contestata
 assert([...t0.timeline].every((c, i, a) => i === 0 || a[i - 1].annee <= c.annee),
   "la carte volée est bien placée chronologiquement chez le contestataire");
 
-// Plafond de jetons : à 5 jetons, le bonus n'en ajoute plus
+// Plafond de jetons : à 5 jetons, le bonus n'en ajoute plus.
+// Et le repêchage d'un adversaire est ignoré quand le joueur actif a les deux.
 t1.tokens = 5;
 els["toggle-titre"].classList.contains = () => true;
 els["toggle-artiste"].classList.contains = () => true;
+const t0TokensBefore = t0.tokens;
+els["bonus-other-0"].onclick(); // t0 tente de revendiquer alors que t1 a tout trouvé
 els["btn-next-turn"].onclick();
 assert(t1.tokens === 5, "plafond de 5 jetons respecté");
+assert(t0.tokens === t0TokensBefore, "repêchage ignoré quand le joueur actif a titre + artiste");
 assert(st.currentTeamIdx === 0, "retour au joueur 1");
 
 // Carte gratuite contre 3 jetons
@@ -110,7 +114,14 @@ const lastIdx = t0.timeline.findIndex(c => c.annee > st.currentTrack.annee);
 G.placeAt(lastIdx === -1 ? t0.timeline.length : lastIdx);
 assert(st.phase === "reveal", "pas de contestation possible (adversaire à 0 jeton) → révélation directe");
 assert(st.lastResult.correct === true, "dernière carte bien placée");
+
+// Repêchage : le joueur actif sèche (toggles décochés), l'adversaire annonce
+// titre + artiste → le jeton est pour lui (clic = sélection, re-clic = annulation)
+els["bonus-other-1"].onclick(); // sélection
+els["bonus-other-1"].onclick(); // annulation
+els["bonus-other-1"].onclick(); // re-sélection
 els["btn-next-turn"].onclick();
+assert(t1.tokens === 1, "repêchage : +1 jeton pour l'adversaire qui a trouvé les deux");
 assert(st.phase === "end", "victoire détectée → écran de fin");
 
 console.log("\nTous les tests passent ✔");

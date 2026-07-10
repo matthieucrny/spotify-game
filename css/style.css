@@ -485,7 +485,17 @@ button:focus-visible, input:focus-visible {
   color: var(--ink);
   font-weight: 700;
 }
-.bonus-hint { color: var(--text-dim); font-size: 0.78rem; }
+.bonus-toggle:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+.bonus-toggle .dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  display: inline-block;
+  vertical-align: -1px;
+  margin-right: 5px;
+}
+.bonus-others { margin-top: 10px; }
+.bonus-hint { color: var(--text-dim); font-size: 0.78rem; display: inline-block; margin-top: 4px; }
 .bonus-pts { color: var(--text-dim); font-size: 0.85rem; }
 
 /* ---------- Frise ---------- */

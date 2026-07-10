@@ -24,7 +24,7 @@ Un seul téléphone, qu'on se passe de main en main. Les frises sont publiques, 
 3. À son tour, le joueur clique sur **Écouter** (extrait de 15 s, lecteur masqué), annonce à voix haute le titre et l'artiste s'il pense les connaître, puis clique sur un emplacement **⊕** de sa frise pour placer le morceau.
 4. **Contestation 🃏** : une fois la carte placée (marquée « ? »), un adversaire ayant au moins 1 jeton peut **crier « HITSTER »** et poser **1 🪙** : il désigne sur la frise **du joueur actif** l'emplacement où la carte va vraiment selon lui. À la révélation, si le placement du joueur actif était faux et le sien juste, il **prend la carte** (elle rejoint sa propre frise, bien placée). Sinon le jeton est perdu.
 5. **Révélation** : année, titre, artiste et pochette s'affichent. Bien placé → la carte reste ; mal placé → elle est écartée (ou prise par le contestataire).
-6. **Bonus titre + artiste** : à la révélation, si le joueur avait annoncé correctement le titre **et** l'artiste, cochez les deux boutons 🎯 → **+1 jeton 🪙** — même si la carte est mal placée.
+6. **Bonus titre + artiste** : à la révélation, si le joueur avait annoncé correctement le titre **et** l'artiste, cochez les deux boutons 🎯 → **+1 jeton 🪙** — même si la carte est mal placée. **Repêchage** : si le joueur actif sèche (il lui manque le titre ou l'artiste), un autre joueur peut annoncer les deux → cochez son nom, le jeton est pour lui.
 7. **Carte gratuite** : à son tour, **3 🪙** = recevoir une carte de la pioche directement bien placée dans sa frise.
 8. Premier joueur à **N cartes** alignées : victoire. Si la pioche s'épuise avant, classement au nombre de cartes (puis jetons restants).
 

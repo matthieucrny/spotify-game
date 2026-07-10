@@ -511,7 +511,13 @@ function renderReveal(correct, stolen, team) {
         <button id="toggle-titre" class="bonus-toggle">${icon("target")} Titre trouvé</button>
         <button id="toggle-artiste" class="bonus-toggle">${icon("target")} Artiste trouvé</button>
       </div>
-      <span class="bonus-hint">${escapeHtml(team.name)} a nommé le titre et l'artiste ? Cochez les deux = +1 ${coinIcon()} (${MAX_TOKENS} max), même si la carte est mal placée.</span><br>
+      <span class="bonus-hint">${escapeHtml(team.name)} a nommé le titre et l'artiste ? Cochez les deux = +1 ${coinIcon()} (${MAX_TOKENS} max), même si la carte est mal placée.</span>
+      <div class="reveal-bonus bonus-others">
+        ${state.teams.map((t2, i) => i === state.currentTeamIdx ? "" : `
+          <button id="bonus-other-${i}" class="bonus-toggle"><span class="dot" style="background:${t2.color}"></span> ${escapeHtml(t2.name)} les a trouvés</button>
+        `).join("")}
+      </div>
+      <span class="bonus-hint">${escapeHtml(team.name)} sèche ? Un autre joueur qui annonce titre <em>et</em> artiste gagne le jeton à sa place.</span><br>
       ${thiefTeam && !correct && !stolen ? `<span class="track-artist">${escapeHtml(thiefTeam.name)} a contesté… mais s'est trompé d'emplacement aussi. Jeton perdu !</span><br>` : ""}
       ${thiefTeam && correct ? `<span class="track-artist">${escapeHtml(thiefTeam.name)} a contesté pour rien : le placement était bon. Jeton perdu !</span><br>` : ""}
       ${owner
@@ -530,16 +536,45 @@ function renderReveal(correct, stolen, team) {
     void verdict.offsetWidth;
     verdict.style.animation = "";
   }
+  // Bonus « repêchage » : si le joueur actif sèche, un autre joueur qui
+  // annonce titre + artiste gagne le jeton à sa place (un seul revendicateur)
+  let claimantIdx = null;
+  const bothFound = () =>
+    document.getElementById("toggle-titre").classList.contains("on")
+    && document.getElementById("toggle-artiste").classList.contains("on");
+  const refreshBonusOthers = () => {
+    if (bothFound()) claimantIdx = null; // le joueur actif a les deux : le bonus est à lui
+    state.teams.forEach((_, i) => {
+      if (i === state.currentTeamIdx) return;
+      const b = document.getElementById(`bonus-other-${i}`);
+      if (!b) return;
+      b.disabled = bothFound();
+      b.classList.toggle("on", claimantIdx === i);
+    });
+  };
   ["toggle-titre", "toggle-artiste"].forEach((id) => {
     const el = document.getElementById(id);
-    el.onclick = () => el.classList.toggle("on");
+    el.onclick = () => { el.classList.toggle("on"); refreshBonusOthers(); };
+  });
+  state.teams.forEach((_, i) => {
+    if (i === state.currentTeamIdx) return;
+    const b = document.getElementById(`bonus-other-${i}`);
+    if (!b) return;
+    b.onclick = () => {
+      if (bothFound()) return;
+      claimantIdx = claimantIdx === i ? null : i;
+      refreshBonusOthers();
+    };
   });
   const btn = document.getElementById("btn-next-turn");
   btn.innerHTML = won ? `${icon("trophy")} Voir les résultats` : "Joueur suivant →";
   btn.onclick = () => {
-    const both = document.getElementById("toggle-titre").classList.contains("on")
-      && document.getElementById("toggle-artiste").classList.contains("on");
-    if (both) team.tokens = Math.min(MAX_TOKENS, team.tokens + 1);
+    if (bothFound()) {
+      team.tokens = Math.min(MAX_TOKENS, team.tokens + 1);
+    } else if (claimantIdx !== null) {
+      const claimant = state.teams[claimantIdx];
+      claimant.tokens = Math.min(MAX_TOKENS, claimant.tokens + 1);
+    }
     if (won) { endGame(false); return; }
     state.currentTeamIdx = (state.currentTeamIdx + 1) % state.teams.length;
     beginTurn();
