@@ -9,6 +9,12 @@ const GENRE_LABELS = {
   variete: "Variété", rnb: "R&B / Soul", "disco-funk": "Disco / Funk",
 };
 
+/* Icônes SVG inline (sprite déclaré dans index.html) — pas d'émojis structurels */
+function icon(name, cls = "") {
+  return `<svg class="icon${cls ? " " + cls : ""}" aria-hidden="true"><use href="#i-${name}"/></svg>`;
+}
+const coinIcon = () => icon("coin", "icon-coin");
+
 const START_TOKENS = 2;   // jetons HITSTER de départ par joueur
 const MAX_TOKENS = 5;     // un joueur ne peut jamais détenir plus de 5 jetons
 const STEAL_COST = 1;     // contester le placement d'un adversaire
@@ -212,8 +218,9 @@ function renderTeamsEditor() {
     if (state.config.teams.length > 2) {
       const del = document.createElement("button");
       del.className = "btn-remove-team";
-      del.textContent = "✕";
+      del.innerHTML = icon("x");
       del.title = "Supprimer l'équipe";
+      del.setAttribute("aria-label", "Supprimer le joueur");
       del.onclick = () => { state.config.teams.splice(i, 1); renderTeamsEditor(); updatePoolInfo(); };
       row.append(del);
     }
@@ -354,7 +361,7 @@ function beginTurn() {
   document.getElementById("countdown").classList.add("hidden");
   document.getElementById("reveal-modal").classList.add("hidden");
   document.getElementById("steal-modal").classList.add("hidden");
-  document.getElementById("btn-listen").textContent = "▶ Écouter l'extrait (15 s)";
+  document.getElementById("btn-listen").innerHTML = `${icon("play")} Écouter l'extrait (15 s)`;
   renderGame();
 }
 
@@ -370,8 +377,8 @@ function onBuyClick() {
   team.timeline.splice(pos, 0, card);
   if (team.timeline.length >= state.config.target) { endGame(false); return; }
   renderGame();
-  document.getElementById("game-instruction").textContent =
-    `🎁 Carte offerte : ${card.annee} — ${card.titre} (${card.artiste}) rejoint ta frise !`;
+  document.getElementById("game-instruction").innerHTML =
+    `${icon("gift")} Carte offerte : ${card.annee} — ${escapeHtml(card.titre)} (${escapeHtml(card.artiste)}) rejoint ta frise !`;
 }
 
 function onListenClick() {
@@ -383,7 +390,7 @@ function onListenClick() {
     const tl = document.getElementById("active-timeline");
     if (tl.scrollIntoView) tl.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
-  document.getElementById("btn-listen").textContent = "↻ Réécouter l'extrait";
+  document.getElementById("btn-listen").innerHTML = `${icon("replay")} Réécouter l'extrait`;
 }
 
 /* ---------- Placement, interception (règle HITSTER) et révélation ---------- */
@@ -419,14 +426,14 @@ function openStealModal(challengers) {
   document.getElementById("steal-info").innerHTML =
     `<strong style="color:${active.color}">${escapeHtml(active.name)}</strong> a placé la carte
      (emplacement marqué <strong>?</strong> sur sa frise).<br>
-     Un adversaire pense que c'est raté ? Criez « HITSTER » et posez ${STEAL_COST} 🪙 sur sa frise,
+     Un adversaire pense que c'est raté ? Criez « HITSTER » et posez ${STEAL_COST} ${coinIcon()} sur sa frise,
      à l'endroit où la carte va vraiment : si vous avez raison, elle est pour vous !`;
   const box = document.getElementById("steal-buttons");
   box.innerHTML = "";
   challengers.forEach(({ team, idx }) => {
     const b = document.createElement("button");
     b.className = "btn";
-    b.innerHTML = `🃏 <strong style="color:${team.color}">${escapeHtml(team.name)}</strong> crie HITSTER (−${STEAL_COST} 🪙)`;
+    b.innerHTML = `${icon("card")} <strong style="color:${team.color}">${escapeHtml(team.name)}</strong> crie HITSTER (−${STEAL_COST} ${coinIcon()})`;
     b.onclick = () => startSteal(idx);
     box.append(b);
   });
@@ -482,7 +489,7 @@ function renderReveal(correct, stolen, team) {
   const t = state.currentTrack;
   const thiefTeam = state.thief ? state.teams[state.thief.teamIdx] : null;
   const verdict = document.getElementById("reveal-verdict");
-  verdict.textContent = correct ? "✔ Bien joué !" : stolen ? "🃏 Intercepté !" : "✘ Raté !";
+  verdict.innerHTML = correct ? `${icon("check")} Bien joué !` : stolen ? `${icon("card")} Intercepté !` : `${icon("x")} Raté !`;
   verdict.className = "reveal-verdict " + (correct ? "ok" : "ko");
 
   const owner = correct ? team : stolen ? thiefTeam : null;
@@ -501,10 +508,10 @@ function renderReveal(correct, stolen, team) {
     </div>
     <div class="reveal-details">
       <div class="reveal-bonus">
-        <button id="toggle-titre" class="bonus-toggle">🎯 Titre trouvé</button>
-        <button id="toggle-artiste" class="bonus-toggle">🎯 Artiste trouvé</button>
+        <button id="toggle-titre" class="bonus-toggle">${icon("target")} Titre trouvé</button>
+        <button id="toggle-artiste" class="bonus-toggle">${icon("target")} Artiste trouvé</button>
       </div>
-      <span class="bonus-hint">${escapeHtml(team.name)} a nommé le titre et l'artiste ? Cochez les deux = +1 🪙 (${MAX_TOKENS} max), même si la carte est mal placée.</span><br>
+      <span class="bonus-hint">${escapeHtml(team.name)} a nommé le titre et l'artiste ? Cochez les deux = +1 ${coinIcon()} (${MAX_TOKENS} max), même si la carte est mal placée.</span><br>
       ${thiefTeam && !correct && !stolen ? `<span class="track-artist">${escapeHtml(thiefTeam.name)} a contesté… mais s'est trompé d'emplacement aussi. Jeton perdu !</span><br>` : ""}
       ${thiefTeam && correct ? `<span class="track-artist">${escapeHtml(thiefTeam.name)} a contesté pour rien : le placement était bon. Jeton perdu !</span><br>` : ""}
       ${owner
@@ -528,7 +535,7 @@ function renderReveal(correct, stolen, team) {
     el.onclick = () => el.classList.toggle("on");
   });
   const btn = document.getElementById("btn-next-turn");
-  btn.textContent = won ? "🏆 Voir les résultats" : "Joueur suivant →";
+  btn.innerHTML = won ? `${icon("trophy")} Voir les résultats` : "Joueur suivant →";
   btn.onclick = () => {
     const both = document.getElementById("toggle-titre").classList.contains("on")
       && document.getElementById("toggle-artiste").classList.contains("on");
@@ -543,7 +550,8 @@ function renderReveal(correct, stolen, team) {
 function launchConfetti() {
   const box = document.getElementById("confetti");
   box.innerHTML = "";
-  const emojis = ["🎉", "🎊", "🎵", "🎶", "⭐", "🪙"];
+  // Rendu couleur fiable partout (🎵/🪙 tombent en glyphes monochromes sur certains systèmes)
+  const emojis = ["🎉", "🎊", "✨", "⭐"];
   for (let i = 0; i < 36; i++) {
     const s = document.createElement("span");
     s.textContent = emojis[i % emojis.length];
@@ -562,18 +570,17 @@ function endGame(deckExhausted) {
     (a, b) => b.timeline.length - a.timeline.length || b.tokens - a.tokens
   );
   const winner = ranking[0];
-  document.getElementById("end-title").textContent = deckExhausted
-    ? "🎵 Pioche épuisée — fin de partie !"
-    : `🏆 ${winner.name} remporte la partie !`;
+  document.getElementById("end-title").innerHTML = deckExhausted
+    ? `${icon("note")} Pioche épuisée — fin de partie !`
+    : `${icon("trophy")} ${escapeHtml(winner.name)} remporte la partie !`;
   if (!deckExhausted) launchConfetti();
 
-  const medals = ["🥇", "🥈", "🥉"];
   document.getElementById("end-ranking").innerHTML = ranking.map((team, i) => `
-    <div class="rank-row">
-      <span class="medal">${medals[i] || i + 1 + "."}</span>
+    <div class="rank-row" style="--i:${i}">
+      <span class="medal${i < 3 ? ` rank-${i + 1}` : ""}">${i + 1}</span>
       <span class="dot" style="background:${team.color}"></span>
       <span class="name">${escapeHtml(team.name)}</span>
-      <span class="pts">${team.timeline.length} carte${team.timeline.length > 1 ? "s" : ""} · ${team.tokens} 🪙</span>
+      <span class="pts">${team.timeline.length} carte${team.timeline.length > 1 ? "s" : ""} · ${team.tokens} ${coinIcon()}</span>
     </div>
   `).join("");
   showScreen("end");
@@ -589,16 +596,17 @@ function renderGame() {
   const thiefTeam = stealing ? state.teams[state.thief.teamIdx] : null;
 
   const banner = document.getElementById("turn-banner");
-  const bannerText = stealing
-    ? `🃏 ${thiefTeam.name} conteste — passez-lui le téléphone !`
-    : `📱 Au tour de ${team.name}`;
-  if (banner.textContent !== bannerText && banner.style.setProperty) {
+  const bannerKey = stealing ? `steal-${state.thief.teamIdx}` : `turn-${state.currentTeamIdx}`;
+  if (banner.dataset.key !== bannerKey && banner.style.setProperty) {
     // Nouveau tour ou contestation : rejoue l'animation d'entrée du bandeau
     banner.style.animation = "none";
     void banner.offsetWidth;
     banner.style.animation = "";
   }
-  banner.textContent = bannerText;
+  banner.dataset.key = bannerKey;
+  banner.innerHTML = stealing
+    ? `${icon("card")} ${escapeHtml(thiefTeam.name)} conteste — passez-lui le téléphone !`
+    : `${icon("smartphone")} Au tour de ${escapeHtml(team.name)}`;
   if (banner.style.setProperty) {
     banner.style.setProperty("--team-color", stealing ? thiefTeam.color : team.color);
   }
@@ -608,18 +616,18 @@ function renderGame() {
     <span class="score-chip${t === spotlight ? " active" : ""}" style="--team-color:${t.color}">
       <span class="dot" style="background:${t.color}"></span>
       ${escapeHtml(t.name)} <strong>${t.timeline.length}</strong>/${state.config.target}
-      <span class="bonus-pts">· ${t.tokens} 🪙</span>
+      <span class="bonus-pts">· ${t.tokens} ${coinIcon()}</span>
       <span class="chip-bar"><span style="width:${Math.min(100, (t.timeline.length / state.config.target) * 100)}%"></span></span>
     </span>
   `).join("");
 
-  document.getElementById("game-instruction").textContent =
+  document.getElementById("game-instruction").innerHTML =
     state.phase === "reveal" || state.phase === "steal"
       ? ""
       : stealing
-        ? `Pose ton jeton sur la frise de ${team.name} : clique l'emplacement ⊕ où la carte va VRAIMENT`
+        ? `Pose ton jeton sur la frise de ${escapeHtml(team.name)} : clique l'emplacement ${icon("plus")} où la carte va VRAIMENT`
         : state.hasListened
-          ? "Annoncez titre + artiste à voix haute (bonus 🪙 à la révélation), puis placez le morceau sur un emplacement ⊕"
+          ? `Annoncez titre + artiste à voix haute (bonus ${coinIcon()} à la révélation), puis placez le morceau sur un emplacement ${icon("plus")}`
           : "Écoutez l'extrait, puis placez le morceau sur votre frise.";
 
   const buy = document.getElementById("btn-buy");
@@ -652,9 +660,10 @@ function renderTimeline(team) {
     }
     const slot = document.createElement("button");
     slot.className = "slot";
-    slot.textContent = "⊕";
+    slot.innerHTML = icon("plus");
     slot.disabled = !canPlace;
     slot.title = "Placer le morceau ici";
+    slot.setAttribute("aria-label", "Placer le morceau ici");
     slot.onclick = () => placeAt(index);
     box.append(slot);
   };
@@ -687,7 +696,7 @@ function renderOtherTimelines(shownTeam) {
     const panel = document.createElement("div");
     panel.className = "panel";
     panel.innerHTML = `
-      <h3><span class="dot" style="background:${team.color}"></span>${escapeHtml(team.name)} — ${team.timeline.length}/${state.config.target} · ${team.tokens} 🪙</h3>
+      <h3><span class="dot" style="background:${team.color}"></span><span>${escapeHtml(team.name)} — ${team.timeline.length}/${state.config.target} · ${team.tokens} ${coinIcon()}</span></h3>
       <div class="mini-timeline">
         ${team.timeline.map((t) => `<span class="mini-card" title="${escapeHtml(t.titre)} — ${escapeHtml(t.artiste)}">${t.annee}</span>`).join("")
           || '<span class="timeline-empty">Frise vide</span>'}

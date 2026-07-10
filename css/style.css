@@ -20,6 +20,12 @@
   --radius: 18px;
   --shadow: 0 14px 40px rgba(6, 3, 20, 0.55);
   --team-color: var(--violet);
+
+  /* Rythme d'animation partagé : mêmes durées/courbes partout */
+  --dur-fast: 150ms;
+  --dur-med: 250ms;
+  --ease-out: cubic-bezier(0.22, 0.9, 0.35, 1);
+  --ease-spring: cubic-bezier(0.34, 1.35, 0.45, 1);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -30,7 +36,9 @@ body {
   background: var(--bg);
   color: var(--text);
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  line-height: 1.5;
   min-height: 100vh;
+  min-height: 100dvh; /* barres d'outils mobiles : hauteur réellement visible */
   touch-action: manipulation; /* supprime le délai/zoom du double-tap sur mobile */
 }
 
@@ -56,10 +64,43 @@ body[data-decade="00"]::before { filter: hue-rotate(-140deg) saturate(1.2); }  /
 body[data-decade="10"]::before { filter: hue-rotate(-25deg) saturate(1.1); }   /* rose EDM */
 body[data-decade="20"]::before { filter: none; }
 
+/* Grain léger par-dessus les halos : texture « papier d'affiche » */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background-image: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="160" height="160"><filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/></filter><rect width="100%25" height="100%25" filter="url(%23n)"/></svg>');
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+}
+
+/* Icônes SVG inline (sprite dans index.html) : taille et alignement hérités du texte */
+.icon {
+  width: 1em;
+  height: 1em;
+  display: inline-block;
+  vertical-align: -0.125em;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  flex-shrink: 0;
+}
+.icon-coin { color: var(--cta2); }
+
 /* Typo display pour tout ce qui « titre » : années, bandeaux, en-têtes */
 h1, h2, h3, .turn-banner, .timeline-card .year, .big-year, .flip-year,
 .target-value, .reveal-verdict, .mini-card, .countdown-label, .flip-back span {
   font-family: "Space Grotesk", "Avenir Next", -apple-system, sans-serif;
+}
+
+/* Chiffres à chasse fixe : années, compteurs et scores ne « sautent » pas */
+.timeline-card .year, .big-year, .flip-year, .target-value,
+.countdown-label, .mini-card, .score-chip, .rank-row .pts {
+  font-variant-numeric: tabular-nums;
 }
 
 button { font-family: inherit; touch-action: manipulation; }
@@ -79,13 +120,15 @@ button:focus-visible, input:focus-visible {
 /* ---------- En-têtes ---------- */
 .app-header { text-align: center; margin-bottom: 28px; }
 .app-header h1 {
-  font-size: 2.3rem;
+  font-size: clamp(1.5rem, 3.2vw + 0.9rem, 2.3rem);
   letter-spacing: -0.5px;
   background: linear-gradient(100deg, var(--cta1) 10%, var(--cta2) 45%, var(--violet) 90%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
+/* Le dégradé ne s'applique qu'au texte ; l'icône garde une couleur pleine */
+.app-header h1 .icon { color: var(--cta2); }
 .subtitle { color: var(--text-dim); margin-top: 8px; letter-spacing: 0.3px; }
 
 /* ---------- Panneaux ---------- */
@@ -115,7 +158,8 @@ button:focus-visible, input:focus-visible {
   min-height: 44px; /* cible tactile confortable */
   font-size: 0.95rem;
   cursor: pointer;
-  transition: background 0.15s, border-color 0.15s, transform 0.06s;
+  transition: background var(--dur-fast), border-color var(--dur-fast),
+    box-shadow var(--dur-fast), transform var(--dur-fast) var(--ease-spring);
   -webkit-user-select: none;
   user-select: none;
 }
@@ -130,7 +174,13 @@ button:focus-visible, input:focus-visible {
   font-weight: 700;
   box-shadow: 0 6px 20px rgba(255, 94, 122, 0.35);
 }
-.btn-primary:hover { filter: brightness(1.08); background: var(--grad); }
+.btn-primary:hover {
+  filter: brightness(1.08);
+  background: var(--grad);
+  transform: translateY(-1px);
+  box-shadow: 0 9px 26px rgba(255, 94, 122, 0.45);
+}
+.btn-primary:active { transform: scale(0.97); }
 .btn-ghost { background: transparent; }
 .btn-big { padding: 14px 28px; font-size: 1.05rem; border-radius: 16px; }
 .btn-step { width: 48px; font-size: 1.25rem; }
@@ -564,7 +614,7 @@ button:focus-visible, input:focus-visible {
 .reveal-details { animation: fade-in 0.4s ease 1s both; }
 @keyframes fade-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 .reveal-info .big-year {
-  font-size: 3.2rem;
+  font-size: clamp(2.5rem, 9vw, 3.2rem);
   font-weight: 700;
   display: block;
   line-height: 1.15;
@@ -638,11 +688,33 @@ button:focus-visible, input:focus-visible {
   padding: 14px 10px;
   border-bottom: 1px solid var(--border);
   font-size: 1.1rem;
+  animation: fade-in 0.4s var(--ease-out) both;
+  animation-delay: calc(var(--i, 0) * 90ms); /* le podium se dévoile ligne par ligne */
 }
 .rank-row:first-child { font-size: 1.25rem; }
 .rank-row:last-child { border-bottom: none; }
-.rank-row .medal { font-size: 1.5rem; width: 40px; text-align: center; }
-.rank-row:first-child .medal { font-size: 2rem; }
+.rank-row .medal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  font-family: "Space Grotesk", "Avenir Next", -apple-system, sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  background: var(--panel-3);
+  color: var(--text-dim);
+}
+.rank-row .medal.rank-1 {
+  background: linear-gradient(135deg, #ffd76a, #f0a13d);
+  color: var(--ink);
+  box-shadow: 0 4px 16px rgba(240, 161, 61, 0.45);
+}
+.rank-row .medal.rank-2 { background: linear-gradient(135deg, #e9e6f4, #b4aecb); color: var(--ink); }
+.rank-row .medal.rank-3 { background: linear-gradient(135deg, #e2a878, #b06f3e); color: var(--ink); }
+.rank-row:first-child .medal { width: 42px; height: 42px; font-size: 1.25rem; }
 .rank-row .dot { width: 14px; height: 14px; border-radius: 50%; }
 .rank-row .name { flex: 1; font-weight: 700; }
 .rank-row .pts { color: var(--text-dim); }
@@ -673,7 +745,6 @@ button:focus-visible, input:focus-visible {
 @media (max-width: 600px) {
   .screen { padding: 12px 10px calc(40px + env(safe-area-inset-bottom)); }
   .app-header { margin-bottom: 16px; }
-  .app-header h1 { font-size: 1.5rem; }
   .panel { padding: 14px 12px; margin-bottom: 12px; }
 
   .game-header { flex-direction: column; align-items: stretch; gap: 8px; margin-bottom: 12px; }
@@ -696,6 +767,5 @@ button:focus-visible, input:focus-visible {
 
   .reveal-modal { padding: 10px; align-items: center; }
   .reveal-card { padding: 18px 14px; margin-bottom: 0; }
-  .reveal-info .big-year { font-size: 2.5rem; }
   #screen-end .setup-footer { flex-direction: column; }
 }

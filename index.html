@@ -8,14 +8,31 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="css/style.css?v=8">
+  <link rel="stylesheet" href="css/style.css?v=9">
 </head>
 <body>
+
+  <!-- Sprite d'icônes SVG (trait 2px, style Lucide) : les émojis dépendent de la
+       police système et cassent l'identité visuelle, les icônes vectorielles non. -->
+  <svg xmlns="http://www.w3.org/2000/svg" style="display:none" aria-hidden="true">
+    <symbol id="i-note" viewBox="0 0 24 24"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></symbol>
+    <symbol id="i-coin" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4.5"/><path d="M12 3v4.5M12 16.5V21M3 12h4.5M16.5 12H21"/></symbol>
+    <symbol id="i-gift" viewBox="0 0 24 24"><rect x="3" y="8" width="18" height="4" rx="1"/><path d="M12 8v13M19 12v7a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2v-7"/><path d="M7.5 8a2.5 2.5 0 0 1 0-5C11 3 12 8 12 8s1-5 4.5-5a2.5 2.5 0 0 1 0 5"/></symbol>
+    <symbol id="i-card" viewBox="0 0 24 24"><rect x="5" y="2.5" width="14" height="19" rx="2"/><path d="M12 7.5l3.2 4.5-3.2 4.5-3.2-4.5Z"/></symbol>
+    <symbol id="i-play" viewBox="0 0 24 24"><polygon points="6 3 20 12 6 21 6 3"/></symbol>
+    <symbol id="i-replay" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 2.64-6.36L3 8"/><path d="M3 3v5h5"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M8 12h8M12 8v8"/></symbol>
+    <symbol id="i-x" viewBox="0 0 24 24"><path d="M18 6 6 18M6 6l12 12"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+    <symbol id="i-target" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="5"/><circle cx="12" cy="12" r="1"/></symbol>
+    <symbol id="i-trophy" viewBox="0 0 24 24"><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></symbol>
+    <symbol id="i-smartphone" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M12 18h.01"/></symbol>
+  </svg>
 
   <!-- ========== ÉCRAN DE CONFIGURATION ========== -->
   <section id="screen-setup" class="screen">
     <header class="app-header">
-      <h1>🎵 Blind Test Chronologique</h1>
+      <h1><svg class="icon" aria-hidden="true"><use href="#i-note"/></svg> Blind Test Chronologique</h1>
       <p class="subtitle">Un seul téléphone, on se le passe — règles HITSTER</p>
     </header>
 
@@ -24,9 +41,9 @@
         <h2>Joueurs</h2>
         <div id="teams-editor"></div>
         <button id="btn-add-team" class="btn btn-ghost">+ Ajouter un joueur</button>
-        <p class="hint-block">Chaque joueur démarre avec 1 carte révélée et <strong>2 jetons 🪙</strong> (5 max).<br>
-        Jetons : 1 🪙 = contester le placement d'un adversaire, 3 🪙 = une carte gratuite.<br>
-        Trouver <strong>titre + artiste</strong> = +1 🪙, même si la carte est mal placée.</p>
+        <p class="hint-block">Chaque joueur démarre avec 1 carte révélée et <strong>2 jetons <svg class="icon icon-coin" aria-hidden="true"><use href="#i-coin"/></svg></strong> (5 max).<br>
+        Jetons : 1 <svg class="icon icon-coin" aria-hidden="true"><use href="#i-coin"/></svg> = contester le placement d'un adversaire, 3 <svg class="icon icon-coin" aria-hidden="true"><use href="#i-coin"/></svg> = une carte gratuite.<br>
+        Trouver <strong>titre + artiste</strong> = +1 <svg class="icon icon-coin" aria-hidden="true"><use href="#i-coin"/></svg>, même si la carte est mal placée.</p>
       </div>
 
       <div class="panel">
@@ -88,14 +105,14 @@
         </div>
       </div>
       <div class="player-controls">
-        <button id="btn-listen" class="btn btn-primary">▶ Écouter l'extrait (15 s)</button>
+        <button id="btn-listen" class="btn btn-primary"><svg class="icon" aria-hidden="true"><use href="#i-play"/></svg> Écouter l'extrait (15 s)</button>
         <div id="countdown" class="countdown hidden">
           <div id="countdown-bar" class="countdown-bar"></div>
           <span id="countdown-label" class="countdown-label">15 s</span>
         </div>
       </div>
       <div class="token-actions">
-        <button id="btn-buy" class="btn">🎁 Carte gratuite <span class="cost">3 🪙</span></button>
+        <button id="btn-buy" class="btn"><svg class="icon" aria-hidden="true"><use href="#i-gift"/></svg> Carte gratuite <span class="cost">3 <svg class="icon icon-coin" aria-hidden="true"><use href="#i-coin"/></svg></span></button>
       </div>
       <p id="game-instruction" class="instruction"></p>
     </div>
@@ -119,7 +136,7 @@
     <!-- Contestation (règle HITSTER : crier « HITSTER » et poser 1 jeton) -->
     <div id="steal-modal" class="reveal-modal hidden">
       <div class="reveal-card">
-        <div class="reveal-verdict">🃏 Quelqu'un crie « HITSTER » ?</div>
+        <div class="reveal-verdict"><svg class="icon" aria-hidden="true"><use href="#i-card"/></svg> Quelqu'un crie « HITSTER » ?</div>
         <div id="steal-info" class="reveal-info"></div>
         <div id="steal-buttons" class="steal-buttons"></div>
       </div>
@@ -139,8 +156,8 @@
     </div>
   </section>
 
-  <script src="js/tracks.js?v=8"></script>
-  <script src="js/app.js?v=8"></script>
+  <script src="js/tracks.js?v=9"></script>
+  <script src="js/app.js?v=9"></script>
   <script src="https://open.spotify.com/embed/iframe-api/v1" async></script>
 </body>
 </html>

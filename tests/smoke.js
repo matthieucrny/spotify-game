@@ -8,7 +8,7 @@ function makeEl() {
     style: {},
     innerHTML: "", textContent: "",
     onclick: null, oninput: null, disabled: false, title: "", value: "10",
-    append() {}, querySelector: () => makeEl(),
+    append() {}, setAttribute() {}, querySelector: () => makeEl(),
     querySelectorAll: () => [],
     dataset: {},
   };
